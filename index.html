@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天下御免の足跡</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a2744">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ai: #1a2744;
+    --ai-light: #243460;
+    --shu: #c0392b;
+    --shu-light: #e74c3c;
+    --kin: #d4a843;
+    --washi: #f5f0e8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--ai);
+    color: var(--washi);
+    font-family: 'Noto Serif JP', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.01) 2px, rgba(255,255,255,0.01) 4px);
+    pointer-events: none;
+  }
+
+  .kamon-bg {
+    position: fixed;
+    top: -120px; right: -120px;
+    width: 400px; height: 400px;
+    border: 2px solid rgba(212,168,67,0.08);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 24px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 48px 0 24px;
+    text-align: center;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  .kamon {
+    width: 60px; height: 60px;
+    margin: 0 auto 20px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: var(--kin);
+  }
+
+  .subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    color: rgba(245,240,232,0.5);
+    margin-top: 8px;
+  }
+
+  .okaeri {
+    background: linear-gradient(135deg, var(--shu) 0%, #8b1a1a 100%);
+    border-radius: 12px;
+    padding: 20px 24px;
+    text-align: center;
+    margin: 8px 0 20px;
+    box-shadow: 0 4px 24px rgba(192,57,43,0.3);
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  .okaeri-text { font-size: 1.1rem; letter-spacing: 0.2em; font-weight: 700; }
+  .okaeri-sub { font-size: 0.7rem; letter-spacing: 0.15em; opacity: 0.8; margin-top: 4px; }
+
+  /* 歩数カード */
+  .steps-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(212,168,67,0.2);
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+    margin-bottom: 16px;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+
+  .steps-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: rgba(245,240,232,0.5);
+    margin-bottom: 12px;
+  }
+
+  .steps-number {
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--kin);
+    line-height: 1;
+    transition: all 0.3s ease;
+  }
+
+  .steps-unit { font-size: 1rem; color: rgba(245,240,232,0.6); margin-top: 8px; letter-spacing: 0.2em; }
+
+  .steps-divider { width: 40px; height: 1px; background: var(--kin); opacity: 0.3; margin: 14px auto; }
+
+  .steps-detail {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    font-size: 0.75rem;
+    color: rgba(245,240,232,0.5);
+  }
+
+  .steps-detail span { letter-spacing: 0.1em; }
+  .steps-detail strong { color: rgba(245,240,232,0.8); }
+
+  /* センサー状態 */
+  .sensor-status {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.8s 0.35s ease both;
+  }
+
+  .status-badge {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(212,168,67,0.15);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+
+  .status-badge .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-bottom: 4px;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .status-badge.active .dot { background: #27ae60; box-shadow: 0 0 8px #27ae60; }
+  .status-badge.error .dot { background: var(--shu); }
+  .status-badge.waiting .dot { background: var(--kin); animation: blink 1s infinite; }
+
+  .status-badge .label { display: block; color: rgba(245,240,232,0.5); }
+  .status-badge .value { display: block; color: var(--washi); font-size: 0.7rem; margin-top: 2px; }
+
+  /* 位置情報カード */
+  .location-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(212,168,67,0.2);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.8s 0.4s ease both;
+  }
+
+  .location-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--kin);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .location-title::after { content: ''; flex: 1; height: 1px; background: rgba(212,168,67,0.2); }
+
+  .location-coords {
+    font-size: 0.8rem;
+    color: rgba(245,240,232,0.7);
+    letter-spacing: 0.05em;
+    line-height: 1.8;
+  }
+
+  .location-coords span { color: rgba(245,240,232,0.4); font-size: 0.65rem; }
+
+  /* 御報告カード */
+  .report-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(212,168,67,0.2);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.8s 0.5s ease both;
+  }
+
+  .report-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    color: var(--kin);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .report-title::after { content: ''; flex: 1; height: 1px; background: rgba(212,168,67,0.2); }
+
+  .report-text {
+    font-size: 0.85rem;
+    line-height: 2;
+    color: rgba(245,240,232,0.8);
+  }
+
+  .report-highlight { color: var(--kin); font-weight: 700; }
+
+  .progress-area { margin-top: 14px; }
+
+  .progress-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: rgba(245,240,232,0.4);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .progress-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--shu), var(--kin)); border-radius: 2px; transition: width 1s ease; }
+
+  /* 許可ボタン */
+  .permission-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--shu), #8b1a1a);
+    border: none;
+    border-radius: 12px;
+    color: var(--washi);
+    font-family: inherit;
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: opacity 0.2s;
+    animation: fadeUp 0.8s 0.6s ease both;
+  }
+
+  .permission-btn:hover { opacity: 0.85; }
+  .permission-btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* ナビ */
+  .bottom-nav {
+    margin-top: auto;
+    padding: 16px 0 32px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    animation: fadeUp 0.8s 0.7s ease both;
+  }
+
+  .nav-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(212,168,67,0.15);
+    border-radius: 12px;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--washi);
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover { background: rgba(212,168,67,0.1); border-color: rgba(212,168,67,0.4); }
+  .nav-btn.active { background: rgba(192,57,43,0.2); border-color: var(--shu); }
+
+  .nav-icon { font-size: 1.3rem; margin-bottom: 6px; }
+  .nav-label { font-size: 0.6rem; letter-spacing: 0.15em; opacity: 0.7; }
+
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+</style>
+</head>
+<body>
+
+<div class="kamon-bg"></div>
+
+<div class="container">
+
+  <header>
+    <div class="kamon">
+      <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="30" cy="30" r="28" stroke="#d4a843" stroke-width="1.5" opacity="0.6"/>
+        <circle cx="30" cy="30" r="22" stroke="#d4a843" stroke-width="1" opacity="0.4"/>
+        <path d="M30 8 L32 26 L30 28 L28 26 Z" fill="#d4a843" opacity="0.8"/>
+        <path d="M30 52 L32 34 L30 32 L28 34 Z" fill="#d4a843" opacity="0.8"/>
+        <path d="M8 30 L26 32 L28 30 L26 28 Z" fill="#d4a843" opacity="0.8"/>
+        <path d="M52 30 L34 32 L32 30 L34 28 Z" fill="#d4a843" opacity="0.8"/>
+        <circle cx="30" cy="30" r="5" fill="#d4a843" opacity="0.5"/>
+      </svg>
+    </div>
+    <h1>天下御免の足跡</h1>
+    <p class="subtitle">歩みは現代、心は歴史。</p>
+  </header>
+
+  <div class="okaeri">
+    <div class="okaeri-text" id="greeting">お帰りなさいませ</div>
+    <div class="okaeri-sub" id="greeting-sub">本日も御苦労にございました</div>
+  </div>
+
+  <!-- センサー状態 -->
+  <div class="sensor-status">
+    <div class="status-badge waiting" id="step-status">
+      <span class="dot"></span>
+      <span class="label">歩数センサー</span>
+      <span class="value" id="step-status-val">待機中</span>
+    </div>
+    <div class="status-badge waiting" id="gps-status">
+      <span class="dot"></span>
+      <span class="label">GPS</span>
+      <span class="value" id="gps-status-val">待機中</span>
+    </div>
+  </div>
+
+  <!-- 許可ボタン -->
+  <button class="permission-btn" id="start-btn" onclick="startTracking()">
+    ⚙️ センサーの許可を求める
+  </button>
+
+  <!-- 歩数カード -->
+  <div class="steps-card">
+    <div class="steps-label">本日の歩数</div>
+    <div class="steps-number" id="step-count">0</div>
+    <div class="steps-unit">歩</div>
+    <div class="steps-divider"></div>
+    <div class="steps-detail">
+      <span><strong id="distance">0.0</strong> km</span>
+      <span><strong id="calories">0</strong> kcal</span>
+      <span><strong id="elapsed">0</strong> 分</span>
+    </div>
+  </div>
+
+  <!-- 位置情報 -->
+  <div class="location-card">
+    <div class="location-title">現在地の御報告</div>
+    <div class="location-coords">
+      <span>緯度：</span> <span id="lat">――</span><br>
+      <span>経度：</span> <span id="lon">――</span><br>
+      <span>精度：</span> <span id="acc">――</span>
+    </div>
+  </div>
+
+  <!-- 御報告 -->
+  <div class="report-card">
+    <div class="report-title">本日の御報告</div>
+    <div class="report-text" id="report-text">
+      センサーの許可をいただければ、<br>
+      本日の歩みを記録いたします。
+    </div>
+    <div class="progress-area">
+      <div class="progress-label">
+        <span>本日の目標（10,000歩）</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active">
+      <div class="nav-icon">👣</div>
+      <div class="nav-label">本日の足跡</div>
+    </button>
+    <button class="nav-btn">
+      <div class="nav-icon">📜</div>
+      <div class="nav-label">制覇の記録</div>
+    </button>
+    <button class="nav-btn">
+      <div class="nav-icon">⚙️</div>
+      <div class="nav-label">設定</div>
+    </button>
+  </nav>
+
+</div>
+
+<script>
+// ===============================
+// 設定
+// ===============================
+const GOAL_STEPS = 10000;
+const STRIDE_M = 0.75; // 1歩の歩幅（メートル）
+
+// ===============================
+// 状態管理
+// ===============================
+let steps = 0;
+let startTime = null;
+let watchId = null;
+let lastAccel = null;
+let stepThreshold = 12; // 加速度センサーの閾値
+
+// ===============================
+// 起動時の挨拶
+// ===============================
+function setGreeting() {
+  const h = new Date().getHours();
+  const el = document.getElementById('greeting');
+  const sub = document.getElementById('greeting-sub');
+  if (h < 10) {
+    el.textContent = 'おはようございます';
+    sub.textContent = '本日もよい歩みを';
+  } else if (h < 17) {
+    el.textContent = 'ごきげんよう';
+    sub.textContent = '本日も御苦労にございます';
+  } else {
+    el.textContent = 'お帰りなさいませ';
+    sub.textContent = '本日も御苦労にございました';
+  }
+}
+
+// ===============================
+// トラッキング開始
+// ===============================
+function startTracking() {
+  const btn = document.getElementById('start-btn');
+  btn.textContent = '許可を確認中…';
+  btn.disabled = true;
+  startTime = new Date();
+
+  // GPS開始
+  startGPS();
+
+  // 歩数センサー（加速度計）開始
+  startStepCounter();
+}
+
+// ===============================
+// GPS
+// ===============================
+function startGPS() {
+  if (!navigator.geolocation) {
+    setStatus('gps', 'error', '非対応');
+    return;
+  }
+
+  setStatus('gps', 'waiting', '取得中…');
+
+  watchId = navigator.geolocation.watchPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lon = pos.coords.longitude.toFixed(6);
+      const acc = Math.round(pos.coords.accuracy);
+
+      document.getElementById('lat').textContent = lat;
+      document.getElementById('lon').textContent = lon;
+      document.getElementById('acc').textContent = acc + 'm';
+
+      setStatus('gps', 'active', '取得済み');
+    },
+    err => {
+      setStatus('gps', 'error', '許可されず');
+      document.getElementById('lat').textContent = '許可が必要です';
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+  );
+}
+
+// ===============================
+// 歩数カウント（加速度センサー）
+// ===============================
+function startStepCounter() {
+  // DeviceMotionEvent の許可（iOS13+）
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission()
+      .then(state => {
+        if (state === 'granted') {
+          listenMotion();
+          setStatus('step', 'active', '計測中');
+        } else {
+          setStatus('step', 'error', '許可されず');
+          useFallbackSteps();
+        }
+      })
+      .catch(() => {
+        setStatus('step', 'error', 'エラー');
+        useFallbackSteps();
+      });
+  } else if (typeof DeviceMotionEvent !== 'undefined') {
+    // Android / その他
+    listenMotion();
+    setStatus('step', 'active', '計測中');
+  } else {
+    setStatus('step', 'error', '非対応');
+    useFallbackSteps();
+  }
+
+  document.getElementById('start-btn').style.display = 'none';
+}
+
+function listenMotion() {
+  let lastPeak = false;
+  let lastMag = 0;
+
+  window.addEventListener('devicemotion', e => {
+    const a = e.accelerationIncludingGravity;
+    if (!a) return;
+
+    const mag = Math.sqrt(a.x*a.x + a.y*a.y + a.z*a.z);
+
+    // ピーク検出で1歩カウント
+    if (mag > stepThreshold && !lastPeak && lastMag <= stepThreshold) {
+      lastPeak = true;
+      addStep();
+    } else if (mag < stepThreshold - 2) {
+      lastPeak = false;
+    }
+    lastMag = mag;
+  });
+}
+
+// PC・非対応端末用のフォールバック（デモ用タイマー）
+function useFallbackSteps() {
+  setStatus('step', 'waiting', 'デモ中');
+  setInterval(() => {
+    if (Math.random() > 0.3) addStep();
+  }, 600);
+}
+
+// ===============================
+// 歩数を1増やして画面更新
+// ===============================
+function addStep() {
+  steps++;
+  updateDisplay();
+}
+
+function updateDisplay() {
+  // 歩数
+  document.getElementById('step-count').textContent = steps.toLocaleString();
+
+  // 距離
+  const km = (steps * STRIDE_M / 1000).toFixed(2);
+  document.getElementById('distance').textContent = km;
+
+  // カロリー（体重60kgで概算）
+  const kcal = Math.round(steps * 0.05);
+  document.getElementById('calories').textContent = kcal;
+
+  // 経過時間
+  if (startTime) {
+    const min = Math.round((new Date() - startTime) / 60000);
+    document.getElementById('elapsed').textContent = min;
+  }
+
+  // 進捗
+  const pct = Math.min(100, Math.round(steps / GOAL_STEPS * 100));
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  // 御報告文
+  updateReport(km, pct);
+}
+
+function updateReport(km, pct) {
+  const el = document.getElementById('report-text');
+  if (steps === 0) return;
+
+  let msg = `本日は <strong class="report-highlight">${steps.toLocaleString()}歩</strong>、`;
+  msg += `<strong class="report-highlight">${km}km</strong> 歩まれました。<br>`;
+
+  if (pct >= 100) {
+    msg += `本日の目標、<strong class="report-highlight">見事達成</strong>にございます！`;
+  } else {
+    msg += `目標まであと <strong class="report-highlight">${(GOAL_STEPS - steps).toLocaleString()}歩</strong> にございます。`;
+  }
+
+  el.innerHTML = msg;
+}
+
+// ===============================
+// ステータスバッジ更新
+// ===============================
+function setStatus(type, state, text) {
+  const badge = document.getElementById(type + '-status');
+  badge.className = 'status-badge ' + state;
+  document.getElementById(type + '-status-val').textContent = text;
+}
+
+// ===============================
+// Service Worker 登録
+// ===============================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(() => console.log('SW登録完了'))
+    .catch(e => console.log('SW登録失敗:', e));
+}
+
+// ===============================
+// 初期化
+// ===============================
+setGreeting();
+</script>
+
+</body>
+</html>
